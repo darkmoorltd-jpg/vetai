@@ -5,6 +5,8 @@ import random
 import time
 from utils.style import apply_global_style
 from utils.supabase_client import deduct_scan
+from utils.deepseek import get_treatment_advice
+from utils.voice import text_to_speech
 
 st.set_page_config(page_title="Scan Animal", page_icon="📸", layout="wide")
 apply_global_style()
@@ -28,7 +30,6 @@ if uploaded:
                 st.stop()
             st.caption(f"Scan deducted. Remaining: {new_total}")
 
-        # Simulated diseases for demo
         diseases = {
             "Cattle": ["Foot-and-Mouth Disease", "Lumpy Skin Disease", "Mastitis"],
             "Poultry": ["Newcastle Disease", "Coccidiosis", "Fowl Pox"],
@@ -46,4 +47,16 @@ if uploaded:
             bar.progress(100)
 
         st.success(f"**{disease}** detected with {confidence*100:.1f}% confidence")
-        st.info("Treatment advice will be shown here (AI-generated).")
+
+        # Treatment advice
+        with st.expander("💊 Treatment Advice", expanded=True):
+            advice = get_treatment_advice(disease, animal)
+            st.write(advice)
+
+            # Voice explanation
+            if st.button("🔊 Listen to Advice"):
+                audio_bytes, err = text_to_speech(advice, "en-GB")
+                if audio_bytes:
+                    st.audio(audio_bytes, format="audio/mp3")
+                else:
+                    st.warning(f"Voice unavailable: {err}")
