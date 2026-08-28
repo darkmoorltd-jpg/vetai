@@ -1,0 +1,49 @@
+
+import streamlit as st
+from PIL import Image
+import random
+import time
+from utils.style import apply_global_style
+from utils.supabase_client import deduct_scan
+
+st.set_page_config(page_title="Scan Animal", page_icon="📸", layout="wide")
+apply_global_style()
+
+st.markdown('<h2 style="text-align:center;">📸 Scan Animal</h2>', unsafe_allow_html=True)
+
+animal = st.selectbox("Select Animal", ["Cattle", "Poultry", "Goat", "Sheep"])
+
+uploaded = st.file_uploader("Upload a photo of the affected area", type=["jpg","jpeg","png"])
+
+if uploaded:
+    image = Image.open(uploaded).convert("RGB")
+    st.image(image, caption="Your animal", width=400)
+
+    if st.button("Identify Disease", type="primary"):
+        user = st.session_state.get("user", None)
+        if user:
+            new_total = deduct_scan(user.id)
+            if new_total < 0:
+                st.error("Not enough scans. Buy more.")
+                st.stop()
+            st.caption(f"Scan deducted. Remaining: {new_total}")
+
+        # Simulated diseases for demo
+        diseases = {
+            "Cattle": ["Foot-and-Mouth Disease", "Lumpy Skin Disease", "Mastitis"],
+            "Poultry": ["Newcastle Disease", "Coccidiosis", "Fowl Pox"],
+            "Goat": ["PPR", "Orf", "Foot Rot"],
+            "Sheep": ["PPR", "Orf", "Foot Rot"],
+        }
+        disease = random.choice(diseases[animal])
+        confidence = random.uniform(0.7, 0.95)
+
+        with st.spinner("Analyzing..."):
+            bar = st.progress(0)
+            for p in range(0, 101, 20):
+                time.sleep(0.1)
+                bar.progress(p)
+            bar.progress(100)
+
+        st.success(f"**{disease}** detected with {confidence*100:.1f}% confidence")
+        st.info("Treatment advice will be shown here (AI-generated).")
